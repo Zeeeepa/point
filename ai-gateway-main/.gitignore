@@ -1,0 +1,12 @@
+/target
+bootstrap
+.vscode/launch.json
+.idea
+.env
+config.yaml
+docker/clickhouse/logs/*
+docker/clickhouse/files/*
+docker/clickhouse/user_scripts/*
+!.gitkeep
+tui_debug.log
+.DS_Store

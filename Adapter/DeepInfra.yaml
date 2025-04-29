@@ -1,0 +1,7 @@
+OPENAI_API_KEY="Fe3V9w1bWf50qX6IeBtsvqLqxIDhyzyE"
+MODEL="deepseek-"ai/DeepSeek-R1-Turbo"
+MESSAGES="[{"role": "user", "content": "Hello"}],"
+
+# AWS_ACCESS_KEY_ID=your_aws_access_key_id
+# AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+# AWS_REGION=us-east-1

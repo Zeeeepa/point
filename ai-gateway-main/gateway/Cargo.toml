@@ -1,0 +1,55 @@
+[package]
+name = "ai-gateway"
+version = "0.1.3"
+authors = ["LangDB Team<api@langdb.ai>"]
+description = "AI gateway for managing and routing LLM requests - Govern, Secure, and Optimize your AI Traffic."
+license = "Apache-2.0"
+repository = "https://github.com/langdb/ai-gateway"
+documentation = "https://docs.langdb.ai"
+readme = "../README.md"
+keywords = ["llm", "openai", "anthropic", "gemini", "mcp"]
+categories = ["web-programming", "network-programming"]
+edition = "2021"
+default-run = "ai-gateway"
+[[bin]]
+name = "ai-gateway"
+path = "src/main.rs"
+
+[dependencies]
+langdb_core = { path = "../core", version = "0.1.3" }
+tokio = { version = "1.37.0", features = ["sync"] }
+serde = { version = "1.0.199", features = ["serde_derive"] }
+serde_json = "1.0"
+async-trait = "0.1.82"
+thiserror = "2.0.11"
+futures = "0.3.30"
+actix-cors = "0.7.0"
+
+minijinja = "2.0.1"
+reqwest = { version = "0.12.2", default-features = false, features = [
+  "json",
+  "stream",
+] }
+actix-web = "4"
+tonic = "0.12.0"
+tracing = { version = "0.1.40", features = ["log", "valuable"] }
+tracing-subscriber = { version = "0.3.0", features = [
+  "env-filter",
+  "tracing-log",
+  "valuable",
+] }
+opentelemetry = "0.24"
+opentelemetry-otlp = { version = "0.17", features = ["tls"] }
+opentelemetry_sdk = { version = "0.24.0", features = ["rt-tokio"] }
+serde_yaml = "0.9"
+clap = { version = "4.5", features = ["derive"] }
+directories = "5.0"
+prettytable-rs = "0.10.0"
+dotenv = "0.15.0"
+futures-util = "0.3"
+
+ratatui = "0.24.0"
+crossterm = "0.27.0"
+open = "5.3.2"
+
+chrono = "0.4"
