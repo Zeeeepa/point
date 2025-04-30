@@ -1,0 +1,22 @@
+server:
+  port: 8080          # Server port
+  debug: false        # Debug mode
+  password: ""        # Optional API password
+  proxied: ""         # Optional proxy for outgoing connections
+
+# Browser automation settings (for web-based services)
+browser-less:
+  enabled: true       # Enable browser automation
+  port: 9222          # Browser automation port
+  disabled-gpu: true  # Disable GPU acceleration
+  headless: true      # Run in headless mode
+  reversal: ""        # Optional reverse proxy
+
+# Cursor configuration for Claude 3.7 Sonnet
+cursor:
+  model:              # Cursor model configuration
+    - "claude-3.7-sonnet"
+    - "claude-3.7-sonnet-max"
+    - "claude-3.7-sonnet-thinking"
+    - "claude-3.7-sonnet-thinking-max"
+
