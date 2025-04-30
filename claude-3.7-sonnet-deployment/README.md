@@ -18,6 +18,8 @@ This directory contains everything you need to deploy Claude 3.7 Sonnet via the 
 
 ## Setup Instructions
 
+### Linux/macOS
+
 1. Clone this repository:
    ```bash
    git clone https://github.com/Zeeeepa/point.git
@@ -39,6 +41,40 @@ This directory contains everything you need to deploy Claude 3.7 Sonnet via the 
 5. Test the deployment:
    ```bash
    ./test_claude.sh
+   ```
+
+### Windows
+
+1. Clone this repository:
+   ```powershell
+   git clone https://github.com/Zeeeepa/point.git
+   cd point/claude-3.7-sonnet-deployment
+   ```
+
+2. Run one of the Windows setup scripts:
+
+   **Option 1: Using Command Prompt (CMD):**
+   ```cmd
+   setup.bat
+   ```
+
+   **Option 2: Using PowerShell (recommended):**
+   ```powershell
+   .\setup.ps1
+   ```
+
+3. Follow the prompts to enter your Cursor session token.
+
+4. Test the deployment:
+
+   **Option 1: Using Command Prompt (CMD):**
+   ```cmd
+   test_claude.bat
+   ```
+
+   **Option 2: Using PowerShell (recommended):**
+   ```powershell
+   .\test_claude.ps1
    ```
 
 ## Getting Your Cursor Session Token
@@ -74,6 +110,26 @@ curl http://localhost:8080/v1/chat/completions \
   }'
 ```
 
+For Windows PowerShell:
+
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8080/v1/chat/completions" `
+  -Method Post `
+  -Headers @{"Content-Type"="application/json"} `
+  -Body '{
+    "model": "cursor/claude-3.7-sonnet",
+    "messages": [{"role": "user", "content": "Hello, how are you?"}]
+  }'
+```
+
+For Windows Command Prompt:
+
+```cmd
+curl -X POST http://localhost:8080/v1/chat/completions ^
+  -H "Content-Type: application/json" ^
+  -d "{\"model\":\"cursor/claude-3.7-sonnet\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello, how are you?\"}]}"
+```
+
 ## API Endpoints
 
 The chatgpt-adapter provides the following OpenAI-compatible endpoints:
@@ -96,6 +152,11 @@ docker-compose down
 - **No response from API**: Check if your Cursor session token is valid and not expired
 - **Error in response**: Check the error message for details
 - **Service not starting**: Check Docker logs with `docker-compose logs`
+- **Windows-specific issues**: 
+  - If you encounter permission issues, try running the command prompt or PowerShell as Administrator
+  - If Docker Desktop isn't running, start it before running the setup script
+  - For WSL2 backend issues, ensure WSL2 is properly configured
+  - If you get "The system cannot find the path specified" errors, make sure you're in the correct directory
 
 ## Security Notes
 
@@ -106,4 +167,3 @@ docker-compose down
 ## Credits
 
 This deployment uses the [chatgpt-adapter](https://github.com/bincooo/chatgpt-adapter) project, which provides a unified interface to various AI services.
-
