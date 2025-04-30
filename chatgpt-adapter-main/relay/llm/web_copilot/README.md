@@ -9,11 +9,12 @@ This adapter provides OpenAI API compatibility for GitHub Copilot through browse
 - Streaming responses
 - OpenAI API compatibility
 - Automatic language detection
+- Interactive login process
 
 ## Requirements
 
 - [Playwright](https://playwright.dev/) for browser automation
-- Valid GitHub cookies with Copilot access
+- Valid GitHub cookies for authentication (can be generated through interactive login)
 
 ## Installation
 
@@ -23,28 +24,48 @@ This adapter provides OpenAI API compatibility for GitHub Copilot through browse
    playwright install chromium
    ```
 
-2. Extract your GitHub cookies using the provided script:
+2. Build the adapter and login tool:
    ```bash
-   python firefox-cookie-extractor.py -d github.com -f json -o github_cookies.json
+   cd chatgpt-adapter-main
+   make build
    ```
 
 ## Usage
+
+### Interactive Login
+
+The adapter now supports interactive login. When no cookies are provided, it will automatically:
+
+1. Open a browser window
+2. Navigate to GitHub login page
+3. Prompt you to log in manually
+4. Once you type 'Y' after logging in, it will save the cookies for future use
+
+To manually trigger the interactive login process:
+
+```bash
+./bin/login -service github
+```
+
+This will create a `github_cookies.json` file in the current directory.
 
 ### API Endpoints
 
 The adapter provides the following models:
 
 - `web_copilot`: Basic Copilot model
-- `web_copilot/github`: GitHub-specific Copilot model
+- `web_copilot/github`: GitHub Copilot model
 
 ### Authentication
 
-Authentication is done using cookies from GitHub. You need to provide these cookies in the `Authorization` header of your API requests.
+Authentication is done using cookies from GitHub. You can provide these cookies in the `Authorization` header of your API requests.
 
 Example:
 ```
-Authorization: Bearer {"user_session":"your-session-id","_gh_sess":"your-gh-sess"}
+Authorization: Bearer {"_gh_sess":"your-session-cookie","user_session":"your-user-session"}
 ```
+
+If no cookies are provided, the adapter will automatically launch an interactive login process.
 
 ### Example Request
 
@@ -54,22 +75,12 @@ Authorization: Bearer {"user_session":"your-session-id","_gh_sess":"your-gh-sess
   "messages": [
     {
       "role": "user",
-      "content": "language: python\n\ndef calculate_fibonacci(n):\n    # Implement a function to calculate the nth Fibonacci number"
+      "content": "function calculateTotal(items) {\n  // Calculate the total price of all items\n  "
     }
   ],
   "stream": true
 }
 ```
-
-### Language Specification
-
-You can specify the programming language in your prompt by including a line with `language:` followed by the language name. For example:
-
-```
-language: python
-```
-
-If not specified, the adapter will attempt to detect the language automatically based on the code context.
 
 ## Configuration
 
@@ -77,18 +88,36 @@ The adapter supports the following configuration options:
 
 - `web_copilot.debug`: Enable debug mode (default: false)
 
+## Building as Executable
+
+To build the adapter as a standalone executable:
+
+```bash
+cd chatgpt-adapter-main
+make build
+```
+
+This will create executables in the `bin/` directory:
+- `chatgpt-adapter`: The main adapter executable
+- `login`: The interactive login tool
+
+To install these executables to your system:
+
+```bash
+make install
+```
+
 ## Limitations
 
-- The adapter requires a valid GitHub session with Copilot access
+- Only supports code completion (not chat)
 - Performance may be slower than using the official API
-- Some advanced Copilot features may not be available
 
 ## Troubleshooting
 
 If you encounter issues:
 
-1. Make sure your GitHub cookies are valid and up-to-date
+1. Try the interactive login process to refresh your cookies
 2. Check that Playwright is properly installed
 3. Enable debug mode to see detailed logs
-4. Verify that you can manually log in to GitHub and access Copilot in your browser
+4. Verify that you can manually log in to GitHub in your browser
 

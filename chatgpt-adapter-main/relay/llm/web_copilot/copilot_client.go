@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -41,6 +43,27 @@ func (c *CopilotClient) Initialize(cookies map[string]string, debug bool) error 
 
 	c.logger.Println("Initializing Copilot client")
 
+	// Check if cookies are empty and prompt for interactive login
+	if len(cookies) == 0 {
+		c.logger.Println("No cookies provided, initiating interactive login")
+		if err := c.runInteractiveLogin(); err != nil {
+			return fmt.Errorf("interactive login failed: %v", err)
+		}
+		
+		// Load cookies from file
+		cookieFile := "github_cookies.json"
+		cookieData, err := os.ReadFile(cookieFile)
+		if err != nil {
+			return fmt.Errorf("failed to read cookie file after login: %v", err)
+		}
+		
+		if err := json.Unmarshal(cookieData, &cookies); err != nil {
+			return fmt.Errorf("failed to parse cookie file: %v", err)
+		}
+		
+		c.logger.Printf("Loaded %d cookies from interactive login", len(cookies))
+	}
+
 	// Create browser manager
 	browserManager, err := NewBrowserManager("~/.copilot-browser", false, debug)
 	if err != nil {
@@ -69,7 +92,73 @@ func (c *CopilotClient) Initialize(cookies map[string]string, debug bool) error 
 	return nil
 }
 
-// Close closes the Copilot client
+// runInteractiveLogin launches the login executable to perform interactive login
+func (c *CopilotClient) runInteractiveLogin() error {
+	c.logger.Println("Running interactive login process")
+	
+	// Find the login executable
+	execPath, err := findLoginExecutable()
+	if err != nil {
+		return fmt.Errorf("failed to find login executable: %v", err)
+	}
+	
+	// Run the login process
+	cmd := exec.Command(execPath, "-service", "github")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("login process failed: %v", err)
+	}
+	
+	return nil
+}
+
+// findLoginExecutable locates the login executable
+func findLoginExecutable() (string, error) {
+	// Try to find the executable in the same directory as the current executable
+	execPath, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current executable path: %v", err)
+	}
+	
+	execDir := strings.TrimSuffix(execPath, filepath.Base(execPath))
+	loginPath := filepath.Join(execDir, "login")
+	
+	// Check if the login executable exists
+	if _, err := os.Stat(loginPath); err == nil {
+		return loginPath, nil
+	}
+	
+	// Try to find it in the PATH
+	loginPath, err = exec.LookPath("login")
+	if err == nil {
+		return loginPath, nil
+	}
+	
+	// Try to build it if it doesn't exist
+	goPath, err := exec.LookPath("go")
+	if err != nil {
+		return "", fmt.Errorf("could not find Go executable: %v", err)
+	}
+	
+	// Determine the path to the login source
+	srcPath := filepath.Join(execDir, "..", "cmd", "login")
+	if _, err := os.Stat(srcPath); err != nil {
+		return "", fmt.Errorf("login source not found at %s: %v", srcPath, err)
+	}
+	
+	// Build the login executable
+	buildCmd := exec.Command(goPath, "build", "-o", loginPath, srcPath)
+	if err := buildCmd.Run(); err != nil {
+		return "", fmt.Errorf("failed to build login executable: %v", err)
+	}
+	
+	return loginPath, nil
+}
+
+// Close closes the client and releases resources
 func (c *CopilotClient) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -78,7 +167,6 @@ func (c *CopilotClient) Close() {
 		c.browserManager.Close()
 		c.browserManager = nil
 	}
-	c.logger.Println("Copilot client closed")
 }
 
 // ParseCookieString parses a cookie string into a map
@@ -221,3 +309,38 @@ func (c *CopilotClient) DetectLanguage(codeContext string) string {
 	return "javascript"
 }
 
+// SendCodeCompletion sends a code context to Copilot and returns the suggested completion
+func (c *CopilotClient) SendCodeCompletion(ctx context.Context, codeContext string, language string) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.browserManager == nil {
+		return "", errors.New("client not initialized")
+	}
+
+	// Send the code context to Copilot
+	suggestion, err := c.browserManager.SendCodeContext(ctx, codeContext, language)
+	if err != nil {
+		return "", fmt.Errorf("failed to send code context to Copilot: %v", err)
+	}
+
+	return suggestion, nil
+}
+
+// StreamCodeCompletion sends a code context to Copilot and streams the suggested completion
+func (c *CopilotClient) StreamCodeCompletion(ctx context.Context, codeContext string, language string, callback func(string, bool)) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.browserManager == nil {
+		return errors.New("client not initialized")
+	}
+
+	// Stream the suggestion
+	err := c.browserManager.StreamSuggestion(ctx, codeContext, language, callback)
+	if err != nil {
+		return fmt.Errorf("failed to stream suggestion from Copilot: %v", err)
+	}
+
+	return nil
+}
