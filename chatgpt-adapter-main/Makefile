@@ -1,27 +1,35 @@
-TARGET_EXEC := server
-ENV := CGO_ENABLED=0
+.PHONY: all build install login-tool clean
 
-.PHONY: all changelog clean install build
+all: build
 
-all: clean install build-linux build-linux-arm64 build-osx build-win
+build:
+	@echo "Building chatgpt-adapter..."
+	go build -o bin/chatgpt-adapter ./main.go
+	@echo "Building login tool..."
+	go build -o bin/login ./cmd/login/main.go
 
-changelog:
-	conventional-changelog -p angular -o CHANGELOG.md -w -r 0
+install: build
+	@echo "Installing chatgpt-adapter and login tool..."
+	mkdir -p $(GOPATH)/bin
+	cp bin/chatgpt-adapter $(GOPATH)/bin/
+	cp bin/login $(GOPATH)/bin/
+	@echo "Installation complete. You can now use 'chatgpt-adapter' and 'login' commands."
+
+login-tool:
+	@echo "Building login tool only..."
+	go build -o bin/login ./cmd/login/main.go
 
 clean:
-	go clean -cache
+	@echo "Cleaning up..."
+	rm -rf bin/
+	@echo "Cleanup complete."
 
-install: clean
-	go install -ldflags="-s -w" -trimpath ./cmd/iocgo
+help:
+	@echo "Available targets:"
+	@echo "  all        - Build all components (default)"
+	@echo "  build      - Build chatgpt-adapter and login tool"
+	@echo "  install    - Build and install to GOPATH/bin"
+	@echo "  login-tool - Build only the login tool"
+	@echo "  clean      - Remove build artifacts"
+	@echo "  help       - Show this help message"
 
-build-linux:
-	${ENV} GOARCH=amd64 GOOS=linux go build -toolexec iocgo $(argv) -ldflags="-s -w" -o bin/linux/${TARGET_EXEC} -trimpath main.go
-
-build-linux-arm64:
-	${ENV} GOARCH=arm64 GOOS=linux go build  -toolexec iocgo $(argv) -ldflags="-s -w" -o bin/linux/${TARGET_EXEC}-arm64 -trimpath main.go
-
-build-osx:
-	${ENV} GOARCH=amd64 GOOS=darwin go build  -toolexec iocgo $(argv) -ldflags="-s -w" -o bin/osx/${TARGET_EXEC} -trimpath main.go
-
-build-win:
-	${ENV} GOARCH=amd64 GOOS=windows go build  -toolexec iocgo $(argv) -ldflags="-s -w" -o bin/windows/${TARGET_EXEC}.exe -trimpath main.go

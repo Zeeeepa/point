@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
+	"path/filepath"
 )
 
 // ClaudeClient is a client for interacting with Claude's web interface
@@ -42,6 +44,27 @@ func (c *ClaudeClient) Initialize(cookies map[string]string, debug bool) error {
 
 	c.logger.Println("Initializing Claude client")
 
+	// Check if cookies are empty and prompt for interactive login
+	if len(cookies) == 0 {
+		c.logger.Println("No cookies provided, initiating interactive login")
+		if err := c.runInteractiveLogin(); err != nil {
+			return fmt.Errorf("interactive login failed: %v", err)
+		}
+		
+		// Load cookies from file
+		cookieFile := "claude_cookies.json"
+		cookieData, err := os.ReadFile(cookieFile)
+		if err != nil {
+			return fmt.Errorf("failed to read cookie file after login: %v", err)
+		}
+		
+		if err := json.Unmarshal(cookieData, &cookies); err != nil {
+			return fmt.Errorf("failed to parse cookie file: %v", err)
+		}
+		
+		c.logger.Printf("Loaded %d cookies from interactive login", len(cookies))
+	}
+
 	// Create browser manager
 	browserManager, err := NewBrowserManager("~/.claude-browser", false, debug)
 	if err != nil {
@@ -70,7 +93,73 @@ func (c *ClaudeClient) Initialize(cookies map[string]string, debug bool) error {
 	return nil
 }
 
-// Close closes the Claude client
+// runInteractiveLogin launches the login executable to perform interactive login
+func (c *ClaudeClient) runInteractiveLogin() error {
+	c.logger.Println("Running interactive login process")
+	
+	// Find the login executable
+	execPath, err := findLoginExecutable()
+	if err != nil {
+		return fmt.Errorf("failed to find login executable: %v", err)
+	}
+	
+	// Run the login process
+	cmd := exec.Command(execPath, "-service", "claude")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("login process failed: %v", err)
+	}
+	
+	return nil
+}
+
+// findLoginExecutable locates the login executable
+func findLoginExecutable() (string, error) {
+	// Try to find the executable in the same directory as the current executable
+	execPath, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current executable path: %v", err)
+	}
+	
+	execDir := strings.TrimSuffix(execPath, filepath.Base(execPath))
+	loginPath := filepath.Join(execDir, "login")
+	
+	// Check if the login executable exists
+	if _, err := os.Stat(loginPath); err == nil {
+		return loginPath, nil
+	}
+	
+	// Try to find it in the PATH
+	loginPath, err = exec.LookPath("login")
+	if err == nil {
+		return loginPath, nil
+	}
+	
+	// Try to build it if it doesn't exist
+	goPath, err := exec.LookPath("go")
+	if err != nil {
+		return "", fmt.Errorf("could not find Go executable: %v", err)
+	}
+	
+	// Determine the path to the login source
+	srcPath := filepath.Join(execDir, "..", "cmd", "login")
+	if _, err := os.Stat(srcPath); err != nil {
+		return "", fmt.Errorf("login source not found at %s: %v", srcPath, err)
+	}
+	
+	// Build the login executable
+	buildCmd := exec.Command(goPath, "build", "-o", loginPath, srcPath)
+	if err := buildCmd.Run(); err != nil {
+		return "", fmt.Errorf("failed to build login executable: %v", err)
+	}
+	
+	return loginPath, nil
+}
+
+// Close closes the client and releases resources
 func (c *ClaudeClient) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -79,7 +168,6 @@ func (c *ClaudeClient) Close() {
 		c.browserManager.Close()
 		c.browserManager = nil
 	}
-	c.logger.Println("Claude client closed")
 }
 
 // ParseCookieString parses a cookie string into a map
@@ -139,11 +227,11 @@ func (c *ClaudeClient) SendMessage(ctx context.Context, messages []Message) (str
 	defer c.mu.Unlock()
 
 	if c.browserManager == nil {
-		return "", errors.New("Claude client not initialized")
+		return "", errors.New("client not initialized")
 	}
 
-	// Format messages into a prompt
-	prompt := c.formatMessages(messages)
+	// Format the prompt from messages
+	prompt := formatPrompt(messages)
 
 	// Send the prompt to Claude
 	response, err := c.browserManager.SendMessage(ctx, prompt)
@@ -160,46 +248,48 @@ func (c *ClaudeClient) StreamMessage(ctx context.Context, messages []Message, ca
 	defer c.mu.Unlock()
 
 	if c.browserManager == nil {
-		return errors.New("Claude client not initialized")
+		return errors.New("client not initialized")
 	}
 
-	// Format messages into a prompt
-	prompt := c.formatMessages(messages)
+	// Format the prompt from messages
+	prompt := formatPrompt(messages)
 
 	// Stream the response
 	err := c.browserManager.StreamResponse(ctx, prompt, callback)
 	if err != nil {
-		return fmt.Errorf("failed to stream response from Claude: %v", err)
+		return fmt.Errorf("failed to stream message from Claude: %v", err)
 	}
 
 	return nil
 }
 
-// formatMessages formats a slice of messages into a prompt for Claude
-func (c *ClaudeClient) formatMessages(messages []Message) string {
-	var prompt strings.Builder
+// formatPrompt formats a list of messages into a single prompt string
+func formatPrompt(messages []Message) string {
+	var systemPrompt string
+	var userPrompts []string
 
 	for _, msg := range messages {
 		switch msg.Role {
 		case "system":
-			prompt.WriteString("System: ")
-			prompt.WriteString(msg.Content)
-			prompt.WriteString("\n\n")
+			systemPrompt = msg.Content
 		case "user":
-			prompt.WriteString("Human: ")
-			prompt.WriteString(msg.Content)
-			prompt.WriteString("\n\n")
+			userPrompts = append(userPrompts, msg.Content)
 		case "assistant":
-			prompt.WriteString("Assistant: ")
-			prompt.WriteString(msg.Content)
-			prompt.WriteString("\n\n")
+			// For now, we ignore assistant messages as Claude web doesn't support them directly
+			// In a more advanced implementation, we could simulate a conversation
 		}
 	}
 
-	// Add the final assistant prefix to prompt Claude to respond
-	prompt.WriteString("Assistant: ")
+	var prompt string
+	if systemPrompt != "" {
+		prompt = fmt.Sprintf("System: %s\n\n", systemPrompt)
+	}
 
-	return prompt.String()
+	if len(userPrompts) > 0 {
+		prompt += strings.Join(userPrompts, "\n\n")
+	}
+
+	return prompt
 }
 
 // Message represents a message in a conversation
@@ -232,4 +322,3 @@ func (cc *ConversationContext) AddMessage(role, content string) {
 func (cc *ConversationContext) GetMessages() []Message {
 	return cc.Messages
 }
-
