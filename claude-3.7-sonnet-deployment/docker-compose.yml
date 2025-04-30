@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  chatgpt-adapter:
+    image: ghcr.io/bincooo/chatgpt-adapter:latest
+    container_name: chatgpt-adapter
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/app/config.yaml
+    environment:
+      - TZ=UTC
+
