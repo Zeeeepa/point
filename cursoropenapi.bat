@@ -43,6 +43,15 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
+REM Install playwright browsers
+echo Installing playwright browsers...
+go run github.com/playwright-community/playwright-go/cmd/playwright install --with-deps
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install playwright browsers.
+    pause
+    exit /b 1
+)
+
 REM Build and run the adapter
 echo Building and starting the Cursor OpenAI API compatible endpoint...
 go run main.go --mode cursor
