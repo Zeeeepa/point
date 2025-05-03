@@ -65,8 +65,23 @@ go get github.com/playwright-community/playwright-go
 REM Install specific cdproto packages
 echo Installing specific cdproto packages...
 go get github.com/chromedp/cdproto/runtime/enable
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install cdproto/runtime/enable dependency.
+    pause
+    exit /b 1
+)
 go get github.com/tidwall/gjson@v1.18.0
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install gjson dependency.
+    pause
+    exit /b 1
+)
 go mod tidy
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to tidy Go modules.
+    pause
+    exit /b 1
+)
 
 REM Build and run the web integration agent for GitHub Copilot
 echo Building and starting the Web Copilot OpenAI API compatible endpoint...

@@ -46,6 +46,11 @@ if %ERRORLEVEL% NEQ 0 (
 REM Fix missing go.sum entries
 echo Fixing go.sum entries...
 go get github.com/tidwall/gjson@v1.18.0
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to get gjson dependency.
+    pause
+    exit /b 1
+)
 go mod tidy
 if %ERRORLEVEL% NEQ 0 (
     echo Failed to fix go.sum entries.
