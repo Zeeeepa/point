@@ -62,6 +62,15 @@ go get github.com/gorilla/mux
 go get github.com/rs/cors
 go get github.com/playwright-community/playwright-go
 
+REM Install playwright browsers
+echo Installing playwright browsers...
+go run github.com/playwright-community/playwright-go/cmd/playwright install --with-deps
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install playwright browsers.
+    pause
+    exit /b 1
+)
+
 REM Build and run the web integration agent for GitHub Copilot
 echo Building and starting the Web Copilot OpenAI API compatible endpoint...
 go run web-integration-agent.go --mode copilot --port 8080
