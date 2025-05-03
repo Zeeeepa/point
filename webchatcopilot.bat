@@ -22,6 +22,14 @@ if %ERRORLEVEL% NEQ 0 (
     echo.
 )
 
+REM Check if the ai-web-integration-agent directory exists
+if not exist "%~dp0ai-web-integration-agent" (
+    echo Error: ai-web-integration-agent directory not found.
+    echo Please make sure the directory exists in the same location as this batch file.
+    pause
+    exit /b 1
+)
+
 REM Navigate to the ai-web-integration-agent directory
 cd "%~dp0ai-web-integration-agent"
 
@@ -52,6 +60,7 @@ go mod init web-integration-agent
 go get github.com/chromedp/chromedp
 go get github.com/gorilla/mux
 go get github.com/rs/cors
+go get github.com/playwright-community/playwright-go
 
 REM Build and run the web integration agent for GitHub Copilot
 echo Building and starting the Web Copilot OpenAI API compatible endpoint...
@@ -59,4 +68,3 @@ go run web-integration-agent.go --mode copilot --port 8080
 
 REM If the program exits, pause to see any error messages
 pause
-
