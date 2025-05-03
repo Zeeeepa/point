@@ -43,6 +43,16 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
+REM Fix missing go.sum entries
+echo Fixing go.sum entries...
+go get github.com/tidwall/gjson@v1.18.0
+go mod tidy
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to fix go.sum entries.
+    pause
+    exit /b 1
+)
+
 REM Build and run the adapter
 echo Building and starting the Cursor OpenAI API compatible endpoint...
 go run main.go --mode cursor

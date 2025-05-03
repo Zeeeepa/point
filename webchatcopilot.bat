@@ -62,6 +62,12 @@ go get github.com/gorilla/mux
 go get github.com/rs/cors
 go get github.com/playwright-community/playwright-go
 
+REM Install specific cdproto packages
+echo Installing specific cdproto packages...
+go get github.com/chromedp/cdproto/runtime/enable
+go get github.com/tidwall/gjson@v1.18.0
+go mod tidy
+
 REM Build and run the web integration agent for GitHub Copilot
 echo Building and starting the Web Copilot OpenAI API compatible endpoint...
 go run web-integration-agent.go --mode copilot --port 8080
