@@ -27,7 +27,14 @@ echo ===================================================== >> "%LOGFILE%"
 echo. >> "%LOGFILE%"
 
 REM Tee function to display and log output
-set "TEE=powershell -Command "$input | Tee-Object -FilePath '%LOGFILE%' -Append""
+REM Check if PowerShell is available
+where powershell >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    set "TEE=powershell -Command "$input | Tee-Object -FilePath '%LOGFILE%' -Append""
+) else (
+    echo WARNING: PowerShell is not available. Logging will be limited. >> "%LOGFILE%"
+    set "TEE=echo"
+)
 
 if %VERBOSE% EQU 1 (
     echo Verbose mode enabled. Logging to %LOGFILE% | %TEE%
@@ -91,4 +98,3 @@ echo Playwright and browser dependencies installed successfully. | %TEE%
 exit /b 0
 
 endlocal
-

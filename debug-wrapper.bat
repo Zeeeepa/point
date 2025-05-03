@@ -46,7 +46,15 @@ REM If there was an error, show the last few lines of the log
 if %EXIT_CODE% NEQ 0 (
     echo Last 20 lines of the log file:
     echo -----------------------------------------------------
-    powershell -Command "Get-Content -Path '%LOGFILE%' -Tail 20"
+    
+    REM Check if PowerShell is available
+    where powershell >nul 2>&1
+    if %ERRORLEVEL% EQU 0 (
+        powershell -Command "Get-Content -Path '%LOGFILE%' -Tail 20"
+    ) else (
+        echo PowerShell is not available. Please check the log file manually.
+        echo Log file: %LOGFILE%
+    )
     echo -----------------------------------------------------
 )
 
@@ -58,4 +66,3 @@ REM Open the log file
 start notepad "%LOGFILE%"
 
 endlocal
-

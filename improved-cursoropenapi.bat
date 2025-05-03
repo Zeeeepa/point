@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Create logs directory if it doesn't exist
+REM Create script logs directory if it doesn't exist
 if not exist "%~dp0logs" mkdir "%~dp0logs"
 
 REM Get the current date and time for the log filename
@@ -29,7 +29,26 @@ echo ===================================================== >> "%LOGFILE%"
 echo. >> "%LOGFILE%"
 
 REM Tee function to display and log output
-set "TEE=powershell -Command "$input | Tee-Object -FilePath '%LOGFILE%' -Append""
+REM Check if PowerShell is available
+where powershell >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    set "TEE=powershell -Command "$input | Tee-Object -FilePath '%LOGFILE%' -Append""
+) else (
+    echo WARNING: PowerShell is not available. Logging will be limited. >> "%LOGFILE%"
+    set "TEE=echo"
+)
+
+REM Create application logs directory if it doesn't exist
+if not exist "logs" (
+    echo Creating application logs directory... | %TEE%
+    mkdir logs
+    if %ERRORLEVEL% NEQ 0 (
+        echo Failed to create application logs directory. | %TEE%
+        echo Press any key to exit... | %TEE%
+        pause > nul
+        exit /b 1
+    )
+)
 
 REM Check if the chatgpt-adapter-main directory exists
 if not exist "%~dp0chatgpt-adapter-main" (
@@ -119,18 +138,6 @@ if %EXIT_CODE% NEQ 0 (
     exit /b 1
 )
 
-REM Create logs directory if it doesn't exist
-if not exist "logs" (
-    echo Creating logs directory... | %TEE%
-    mkdir logs
-    if %ERRORLEVEL% NEQ 0 (
-        echo Failed to create logs directory. | %TEE%
-        echo Press any key to exit... | %TEE%
-        pause > nul
-        exit /b 1
-    )
-)
-
 REM Build and run the adapter
 echo Building and starting the Cursor OpenAI API compatible endpoint... | %TEE%
 echo Running: go run main.go --mode cursor | %TEE%
@@ -145,4 +152,3 @@ echo Press any key to exit... | %TEE%
 pause > nul
 
 endlocal
-

@@ -29,7 +29,14 @@ echo ===================================================== >> "%LOGFILE%"
 echo. >> "%LOGFILE%"
 
 REM Tee function to display and log output
-set "TEE=powershell -Command "$input | Tee-Object -FilePath '%LOGFILE%' -Append""
+REM Check if PowerShell is available
+where powershell >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    set "TEE=powershell -Command "$input | Tee-Object -FilePath '%LOGFILE%' -Append""
+) else (
+    echo WARNING: PowerShell is not available. Logging will be limited. >> "%LOGFILE%"
+    set "TEE=echo"
+)
 
 REM Check if the ai-web-integration-agent directory exists
 if not exist "%~dp0ai-web-integration-agent" (
@@ -250,4 +257,3 @@ echo Press any key to exit... | %TEE%
 pause > nul
 
 endlocal
-
