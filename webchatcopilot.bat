@@ -57,12 +57,37 @@ pip install selenium webdriver-manager pyautogui requests flask
 REM Install Go dependencies
 echo Installing Go dependencies...
 go mod init web-integration-agent
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to initialize Go module.
+    pause
+    exit /b 1
+)
 go get github.com/chromedp/chromedp
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install chromedp dependency.
+    pause
+    exit /b 1
+)
 go get github.com/gorilla/mux
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install gorilla/mux dependency.
+    pause
+    exit /b 1
+)
 go get github.com/rs/cors
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install rs/cors dependency.
+    pause
+    exit /b 1
+)
 go get github.com/playwright-community/playwright-go
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install playwright-go dependency.
+    pause
+    exit /b 1
+)
 
-REM Install playwright browsers
+REM Install playwright browsers (required for web automation)
 echo Installing playwright browsers...
 go run github.com/playwright-community/playwright-go/cmd/playwright install --with-deps
 if %ERRORLEVEL% NEQ 0 (

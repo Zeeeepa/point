@@ -43,7 +43,7 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-REM Install playwright browsers
+REM Install playwright browsers (required for web automation)
 echo Installing playwright browsers...
 go run github.com/playwright-community/playwright-go/cmd/playwright install --with-deps
 if %ERRORLEVEL% NEQ 0 (
