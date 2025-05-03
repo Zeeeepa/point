@@ -12,6 +12,14 @@ if %ERRORLEVEL% NEQ 0 (
     echo.
 )
 
+REM Check if the chatgpt-adapter-main directory exists
+if not exist "%~dp0chatgpt-adapter-main" (
+    echo Error: chatgpt-adapter-main directory not found.
+    echo Please make sure the directory exists in the same location as this batch file.
+    pause
+    exit /b 1
+)
+
 REM Navigate to the chatgpt-adapter-main directory
 cd "%~dp0chatgpt-adapter-main"
 
@@ -26,10 +34,18 @@ if not exist "go.sum" (
     )
 )
 
+REM Install playwright-go dependency
+echo Installing playwright-go dependency...
+go get github.com/playwright-community/playwright-go
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install playwright-go dependency.
+    pause
+    exit /b 1
+)
+
 REM Build and run the adapter
 echo Building and starting the Cursor OpenAI API compatible endpoint...
 go run main.go --mode cursor
 
 REM If the program exits, pause to see any error messages
 pause
-
