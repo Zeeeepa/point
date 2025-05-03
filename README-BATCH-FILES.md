@@ -18,7 +18,7 @@ This directory contains batch files for setting up and running OpenAI API compat
 
 ### Main Endpoint Files
 
-- **`cursoropenapi.bat`** - Starts an OpenAI API compatible endpoint connected to Cursor
+- **`cursoropenapi.bat`** - Starts an OpenAI API compatible endpoint connected to Cursor (v1.1.0 with enhanced logging and fallback mechanisms)
 - **`webchatclaude.bat`** - Starts an OpenAI API compatible endpoint connected to Claude
 - **`webchatcopilot.bat`** - Starts an OpenAI API compatible endpoint connected to GitHub Copilot
 
@@ -67,15 +67,26 @@ This directory contains batch files for setting up and running OpenAI API compat
 
 If you encounter issues:
 
-1. Check the console output for error messages
+1. Check the log files in the `logs` directory for detailed error information
 2. Ensure you have a stable internet connection
 3. Make sure you have the required directories in the correct location
 4. Try running the batch files as administrator
 5. Check that you have sufficient disk space
+6. If a port is already in use, the script will automatically try alternative ports
+
+## Advanced Features (cursoropenapi.bat v1.1.0)
+
+- **Automatic Logging**: All operations are logged to timestamped files in the `logs` directory
+- **Fallback Mechanisms**: 
+  - Automatic retry for failed dependency installations
+  - Alternative port selection if the default port is in use
+  - Multiple download methods if the repository is missing
+- **Error Recovery**: Detailed error messages and recovery steps for common issues
+- **Port Management**: Automatic detection of port conflicts and selection of alternative ports
 
 ## Notes
 
 - The first run may take longer as it installs dependencies
 - Browser binaries will be downloaded during the Playwright installation
 - You will need to authenticate with the respective services (Claude, GitHub)
-
+- Log files are stored in the `logs` directory with timestamps for easy troubleshooting
