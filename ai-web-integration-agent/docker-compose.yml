@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  web-integration-api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - browser-data:/data/browser-data
+      - screenshots:/data/screenshots
+      - logs:/data/logs
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8080
+      - HEADLESS=false
+      - DEBUG_MODE=true
+    restart: unless-stopped
+
+volumes:
+  browser-data:
+  screenshots:
+  logs:
+
