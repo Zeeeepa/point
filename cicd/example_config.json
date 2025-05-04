@@ -1,0 +1,11 @@
+{
+  "github_token": "ghp_example123456789abcdef",
+  "ngrok_api_key": "1a2b3c4d5e6f7g8h9i0j",
+  "repo_owner": "Zeeeepa",
+  "repo_name": "point",
+  "webhook_id": 12345678,
+  "tunnel_url": "https://1a2b-3c4d-5e6f.ngrok.io",
+  "codegen_api_token": "sk-ce027fa7-3c8d-4beb-8c86-ed8asasd99",
+  "codegen_org_id": "323"
+}
+
